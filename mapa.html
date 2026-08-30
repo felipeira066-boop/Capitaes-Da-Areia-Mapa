@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Capitães da Areia — Salvador</title>
+
+    <link rel="stylesheet" href="css/mapa.css">
+
+</head>
+
+<body>
+
+    <main class="map-screen">
+
+        <header class="map-header">
+
+            <a
+                href="index.html"
+                class="home-button"
+                aria-label="Voltar para a página inicial"
+            >
+                ← INÍCIO
+            </a>
+
+            <div class="logo">
+                CAPITÃES<br>
+                <span>DA AREIA</span>
+            </div>
+
+            <div class="progress">
+                01 / 05
+            </div>
+
+        </header>
+
+
+        <div id="map"></div>
+
+
+        <section class="location-info" id="locationInfo">
+
+            <div class="location-content">
+
+                <p class="location-number" id="locationNumber">
+                    01
+                </p>
+
+                <h2 id="locationName">
+                    O Trapiche
+                </h2>
+
+                <p class="location-description" id="locationDescription">
+                    O velho trapiche abandonado junto ao cais é o principal
+                    abrigo dos Capitães da Areia.
+                </p>
+
+                <div class="navigation">
+
+                    <button id="prevButton" disabled>
+                        ← VOLTAR
+                    </button>
+
+                    <button id="nextButton">
+                        PRÓXIMO →
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <button
+            class="info-toggle"
+            id="infoToggle"
+            aria-label="Mostrar informações"
+        >
+            ↑
+        </button>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      
+    <script src="js/supabase.js"></script>
+
+    <script src="js/mapa.js"></script>
+    
+    <script 
+        async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCf7n1q62iE-f7OnZ8q4UfBYf3tQsISh9k&loading=async&callback=initMap">
+    </script>
+    
+</body>
+
+</html>

@@ -1,0 +1,448 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Settings — Capitães da Areia</title>
+
+    <link rel="stylesheet" href="css/settings.css">
+
+</head>
+
+
+<body>
+
+    <main class="settings-page">
+
+        <!-- ======================================
+             CABEÇALHO
+        ======================================= -->
+
+        <header class="settings-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    CAPITÃES DA AREIA
+                </p>
+
+                <h1>
+                    Settings
+                </h1>
+
+                <p class="header-description">
+                    Gerencie os locais apresentados no percurso.
+                </p>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <a
+                    href="mapa.html"
+                    class="back-to-map"
+                >
+                    ← VOLTAR AO MAPA
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- ======================================
+             CONTEÚDO
+        ======================================= -->
+
+        <div class="settings-layout">
+
+
+            <!-- ==================================
+                 LISTA DE LOCAIS
+            =================================== -->
+
+            <section class="locations-panel">
+
+                <div class="section-title">
+
+                    <div>
+
+                        <p class="section-label">
+                            PERCURSO
+                        </p>
+
+                        <h2>
+                            Locais
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        id="addLocationButton"
+                        class="primary-button"
+                    >
+                        + NOVO LOCAL
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="locationsList"
+                    class="locations-list"
+                >
+
+                    <p class="loading">
+                        Carregando locais...
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==================================
+                 EDITOR
+            =================================== -->
+
+            <section
+                class="editor-panel"
+                id="editorPanel"
+            >
+
+                <div class="editor-header">
+
+                    <div>
+
+                        <p
+                            class="section-label"
+                            id="editorLabel"
+                        >
+                            EDITANDO
+                        </p>
+
+                        <h2 id="editorTitle">
+                            O Trapiche
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="locationForm"
+                    class="location-form"
+                >
+
+
+                    <!-- ID -->
+
+                    <input
+                        type="hidden"
+                        id="locationId"
+                    >
+
+
+                    <!-- ORDEM -->
+
+                    <div class="form-field">
+
+                        <label for="locationOrder">
+                            ORDEM
+                        </label>
+
+                        <input
+                            type="number"
+                            id="locationOrder"
+                            min="1"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- NOME -->
+
+                    <div class="form-field">
+
+                        <label for="locationName">
+                            NOME
+                        </label>
+
+                        <input
+                            type="text"
+                            id="locationName"
+                            placeholder="Ex.: O Trapiche"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- SUBTÍTULO -->
+
+                    <div class="form-field">
+
+                        <label for="locationSubtitle">
+                            SUBTÍTULO
+                        </label>
+
+                        <input
+                            type="text"
+                            id="locationSubtitle"
+                            placeholder="Ex.: O abrigo dos Capitães da Areia"
+                        >
+
+                    </div>
+
+
+                    <!-- COORDENADAS -->
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label for="locationLatitude">
+                                LATITUDE
+                            </label>
+
+                            <input
+                                type="number"
+                                id="locationLatitude"
+                                step="any"
+                                placeholder="-12.0000"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-field">
+
+                            <label for="locationLongitude">
+                                LONGITUDE
+                            </label>
+
+                            <input
+                                type="number"
+                                id="locationLongitude"
+                                step="any"
+                                placeholder="-38.0000"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="location-picker">
+
+                        <div class="picker-header">
+
+                            <div>
+                                <p class="section-label">
+                                    LOCALIZAÇÃO
+                                </p>
+
+                                <h3>
+                                    Escolher no mapa
+                                </h3>
+                            </div>
+
+                            <button
+                                type="button"
+                                id="pickLocationButton"
+                                class="primary-button"
+                            >
+                                📍 ESCOLHER LOCAL
+                            </button>
+
+                        </div>
+
+                        <div
+                            id="settingsMap"
+                            class="settings-map"
+                        ></div>
+
+                        <p
+                            id="mapPickerMessage"
+                            class="picker-message"
+                        >
+                            Clique em "Escolher local" e depois selecione
+                            um ponto no mapa.
+                        </p>
+
+                    </div>
+
+
+                    <!-- ZOOM -->
+
+                    <div class="form-field">
+
+                        <label for="locationZoom">
+                            ZOOM DO MAPA
+                        </label>
+
+                        <input
+                            type="number"
+                            id="locationZoom"
+                            min="1"
+                            max="22"
+                            step="0.1"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- STREET VIEW -->
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label for="locationHeading">
+                                HEADING
+                            </label>
+
+                            <input
+                                type="number"
+                                id="locationHeading"
+                                step="0.1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-field">
+
+                            <label for="locationPitch">
+                                PITCH
+                            </label>
+
+                            <input
+                                type="number"
+                                id="locationPitch"
+                                step="0.1"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="form-field">
+
+                        <label for="locationDescription">
+                            DESCRIÇÃO
+                        </label>
+
+                        <textarea
+                            id="locationDescription"
+                            rows="7"
+                            placeholder="Texto que aparecerá na caixa de informações..."
+                            required
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- AÇÕES -->
+
+                    <div class="form-actions">
+
+                        <button
+                            type="button"
+                            id="deleteButton"
+                            class="danger-button"
+                        >
+                            EXCLUIR
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="save-button"
+                        >
+                            SALVAR ALTERAÇÕES
+                        </button>
+
+                    </div>
+
+
+                    <p
+                        id="formMessage"
+                        class="form-message"
+                    ></p>
+
+                </form>
+
+            </section>
+
+        </div>
+
+
+        <!-- ======================================
+             AVISO
+        ======================================= -->
+
+        <footer class="settings-footer">
+
+            <span>
+                ⚠ As alterações feitas aqui afetam o mapa público.
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <!-- ======================================
+         SUPABASE
+    ======================================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="js/supabase.js"></script>
+
+    <script src="js/settings.js"></script>
+
+</body>
+
+</html>
+                <p
+                    id="loginMessage"
+                    class="login-message"
+                ></p>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="js/supabase.js"></script>
+
+    <script src="js/settings.js"></script>
+
+</body>
+
+</html>
