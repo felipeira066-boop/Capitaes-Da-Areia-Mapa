@@ -1,0 +1,15 @@
+# Configurações locais
+config/config.js
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+node_modules/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
