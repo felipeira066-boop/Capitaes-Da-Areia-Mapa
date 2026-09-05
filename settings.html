@@ -335,55 +335,85 @@
 
                     <!-- ZOOM -->
 
-                    <div class="form-field">
+                    <!-- ======================================
+                        CONTROLES DO STREET VIEW
+                    ======================================= -->
 
-                        <label for="locationZoom">
-                            ZOOM DO MAPA
-                        </label>
+                    <div class="street-controls">
 
-                        <input
-                            type="number"
-                            id="locationZoom"
-                            min="1"
-                            max="22"
-                            step="0.1"
-                            required
-                        >
+                        <div class="street-control">
 
-                    </div>
+                            <div class="control-header">
 
+                                <label for="locationHeading">
+                                    Direção
+                                </label>
 
-                    <!-- STREET VIEW -->
+                                <span id="headingValue">
+                                    0°
+                                </span>
 
-                    <div class="form-row">
-
-                        <div class="form-field">
-
-                            <label for="locationHeading">
-                                HEADING
-                            </label>
+                            </div>
 
                             <input
-                                type="number"
+                                type="range"
                                 id="locationHeading"
-                                step="0.1"
+                                min="0"
+                                max="360"
+                                step="1"
                                 value="0"
                             >
 
                         </div>
 
 
-                        <div class="form-field">
+                        <div class="street-control">
 
-                            <label for="locationPitch">
-                                PITCH
-                            </label>
+                            <div class="control-header">
+
+                                <label for="locationPitch">
+                                    Ângulo
+                                </label>
+
+                                <span id="pitchValue">
+                                    0°
+                                </span>
+
+                            </div>
 
                             <input
-                                type="number"
+                                type="range"
                                 id="locationPitch"
-                                step="0.1"
+                                min="-90"
+                                max="90"
+                                step="1"
                                 value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="street-control">
+
+                            <div class="control-header">
+
+                                <label for="locationZoom">
+                                    Zoom
+                                </label>
+
+                                <span id="zoomValue">
+                                    18
+                                </span>
+
+                            </div>
+
+                            <input
+                                type="range"
+                                id="locationZoom"
+                                min="1"
+                                max="21"
+                                step="0.1"
+                                value="18"
                             >
 
                         </div>

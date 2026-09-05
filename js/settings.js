@@ -56,6 +56,30 @@ const pickLocationButton =
 const mapPickerMessage =
     document.getElementById("mapPickerMessage");
 
+const testStreetViewButton =
+    document.getElementById(
+        "testStreetViewButton"
+    );
+
+const streetViewMessage =
+    document.getElementById(
+        "streetViewMessage"
+    );
+
+const headingValue =
+    document.getElementById(
+        "headingValue"
+    );
+
+const pitchValue =
+    document.getElementById(
+        "pitchValue"
+    );
+
+const zoomValue =
+    document.getElementById(
+        "zoomValue"
+    );
 
 // ============================================================
 // VERIFICA ELEMENTOS
@@ -72,18 +96,13 @@ function verificarElementos() {
         editorTitle,
         editorLabel,
         pickLocationButton,
-        mapPickerMessage
+        mapPickerMessage,
+        testStreetViewButton,
+        streetViewMessage,
+        headingValue,
+        pitchValue,
+        zoomValue
     };
-
-    const testStreetViewButton =
-        document.getElementById(
-            "testStreetViewButton"
-        );
-
-    const streetViewMessage =
-        document.getElementById(
-            "streetViewMessage"
-        );
 
 
     for (const [nome, elemento] of Object.entries(elementos)) {
@@ -901,6 +920,8 @@ function preencherFormulario(local) {
 
 }
 
+atualizarValoresControles();
+
 
 // ============================================================
 // NOVO LOCAL
@@ -965,6 +986,8 @@ function novoLocal() {
     ).value =
         0;
 
+    atualizarValoresControles();
+
 
     deleteButton.style.display =
         "none";
@@ -1014,7 +1037,6 @@ function novoLocal() {
         'Clique em "Escolher local" e depois selecione um ponto no mapa.';
 
 }
-
 
 // ============================================================
 // SALVAR
@@ -1579,22 +1601,60 @@ testStreetViewButton.addEventListener(
     testarStreetView
 );
 
-[
-    "locationHeading",
-    "locationPitch",
-    "locationZoom"
-].forEach((id) => {
 
-    document
-        .getElementById(id)
-        .addEventListener(
-            "input",
-            atualizarStreetView
+
+/* ========================================
+   ATUALIZAR VALORES DOS CONTROLES
+======================================== */
+
+// ============================================================
+// ATUALIZAR VALORES DOS CONTROLES
+// ============================================================
+
+function atualizarValoresControles() {
+
+    const heading =
+        Number(
+            document.getElementById(
+                "locationHeading"
+            ).value
         );
 
-});
+    const pitch =
+        Number(
+            document.getElementById(
+                "locationPitch"
+            ).value
+        );
 
-function atualizarStreetView() {
+    const zoom =
+        Number(
+            document.getElementById(
+                "locationZoom"
+            ).value
+        );
+
+
+    headingValue.textContent =
+        `${heading}°`;
+
+    pitchValue.textContent =
+        `${pitch}°`;
+
+    zoomValue.textContent =
+        zoom.toFixed(1);
+
+}
+
+
+// ============================================================
+// ATUALIZAR STREET VIEW
+// ============================================================
+
+function atualizarStreetViewComControles() {
+
+    atualizarValoresControles();
+
 
     if (!settingsPanorama) {
 
@@ -1603,9 +1663,7 @@ function atualizarStreetView() {
     }
 
 
-    if (
-        !settingsPanorama.getVisible()
-    ) {
+    if (!settingsPanorama.getVisible()) {
 
         return;
 
@@ -1638,9 +1696,8 @@ function atualizarStreetView() {
 
     settingsPanorama.setPov({
 
-        heading: heading,
-
-        pitch: pitch
+        heading,
+        pitch
 
     });
 
@@ -1650,3 +1707,24 @@ function atualizarStreetView() {
     );
 
 }
+
+[
+    "locationHeading",
+    "locationPitch",
+    "locationZoom"
+].forEach((id) => {
+
+    document
+        .getElementById(id)
+        .addEventListener(
+            "input",
+            () => {
+
+                atualizarValoresControles();
+
+                atualizarStreetViewComControles();
+
+            }
+        );
+
+});
