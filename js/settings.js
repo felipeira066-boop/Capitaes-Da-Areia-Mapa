@@ -1,11 +1,33 @@
+// ============================================================
+// CAPITÃES DA AREIA
+// SETTINGS
+// ============================================================
+
+
+// ============================================================
+// ESTADO
+// ============================================================
+
 let locais = [];
 
 let localSelecionado = null;
 
+// Mapa do Settings
+let settingsMap = null;
 
-/* ========================================
-   ELEMENTOS
-======================================== */
+// Marcador usado para indicar o ponto escolhido
+let selectedLocationMarker = null;
+
+// Indica se estamos no modo "escolher local"
+let pickingLocation = false;
+
+let settingsPanorama = null;
+
+let settingsStreetViewService = null;
+
+// ============================================================
+// ELEMENTOS DA INTERFACE
+// ============================================================
 
 const locationsList =
     document.getElementById("locationsList");
@@ -28,17 +50,563 @@ const editorTitle =
 const editorLabel =
     document.getElementById("editorLabel");
 
+const pickLocationButton =
+    document.getElementById("pickLocationButton");
 
-/* ========================================
-   CARREGAR LOCAIS
-======================================== */
+const mapPickerMessage =
+    document.getElementById("mapPickerMessage");
+
+
+// ============================================================
+// VERIFICA ELEMENTOS
+// ============================================================
+
+function verificarElementos() {
+
+    const elementos = {
+        locationsList,
+        locationForm,
+        addLocationButton,
+        deleteButton,
+        formMessage,
+        editorTitle,
+        editorLabel,
+        pickLocationButton,
+        mapPickerMessage
+    };
+
+    const testStreetViewButton =
+        document.getElementById(
+            "testStreetViewButton"
+        );
+
+    const streetViewMessage =
+        document.getElementById(
+            "streetViewMessage"
+        );
+
+
+    for (const [nome, elemento] of Object.entries(elementos)) {
+
+        if (!elemento) {
+
+            console.error(
+                `Elemento "${nome}" não encontrado no HTML.`
+            );
+
+        }
+
+    }
+
+}
+
+// ============================================================
+// CARREGAR GOOGLE MAPS
+// ============================================================
+
+function carregarGoogleMapsSettings() {
+
+    return new Promise((resolve, reject) => {
+
+        // Já carregado
+        if (
+            window.google &&
+            window.google.maps &&
+            window.google.maps.Map
+        ) {
+
+            console.log(
+                "Google Maps já estava carregado."
+            );
+
+            resolve();
+
+            return;
+        }
+
+
+        const script =
+            document.createElement("script");
+
+
+        script.src =
+            "https://maps.googleapis.com/maps/api/js" +
+            `?key=${encodeURIComponent(
+                CONFIG.googleMapsApiKey
+            )}` +
+            "&libraries=marker";
+
+
+        script.async = true;
+
+        script.defer = true;
+
+
+        script.onload = () => {
+
+            console.log(
+                "Google Maps carregado no Settings."
+            );
+
+            resolve();
+
+        };
+
+
+        script.onerror = () => {
+
+            reject(
+                new Error(
+                    "Não foi possível carregar o Google Maps."
+                )
+            );
+
+        };
+
+
+        document.head.appendChild(script);
+
+    });
+
+}
+// ============================================================
+// INICIALIZAR MAPA
+// ============================================================
+
+async function inicializarMapaSettings() {
+
+    try {
+
+        console.log(
+            "Inicializando mapa do Settings..."
+        );
+
+
+        // ========================================
+        // GOOGLE MAPS
+        // ========================================
+
+        await carregarGoogleMapsSettings();
+
+
+        console.log(
+            "Google Maps disponível."
+        );
+
+
+        // ========================================
+        // ELEMENTO
+        // ========================================
+
+        const mapElement =
+            document.getElementById(
+                "settingsMap"
+            );
+
+
+        if (!mapElement) {
+
+            throw new Error(
+                'Elemento "#settingsMap" não encontrado.'
+            );
+
+        }
+
+
+        // ========================================
+        // CRIAR MAPA
+        // ========================================
+
+        settingsMap =
+            new google.maps.Map(
+                mapElement,
+                {
+
+                    center: {
+                        lat: -12.9714,
+                        lng: -38.5014
+                    },
+
+                    zoom: 14,
+
+                    mapTypeId: "roadmap",
+
+                    mapId: "DEMO_MAP_ID",
+
+                    zoomControl: true,
+
+                    streetViewControl: true,
+
+                    mapTypeControl: false,
+
+                    fullscreenControl: false
+
+                }
+            );
+
+        /* ========================================
+        STREET VIEW
+        ======================================== */
+
+        settingsStreetViewService =
+            new google.maps.StreetViewService();
+
+
+        settingsPanorama =
+            new google.maps.StreetViewPanorama(
+                document.getElementById(
+                    "settingsStreetView"
+                ),
+                {
+
+                    visible: false,
+
+                    addressControl: false,
+
+                    fullscreenControl: true,
+
+                    linksControl: true,
+
+                    panControl: true,
+
+                    zoomControl: true,
+
+                    motionTracking: false
+
+                }
+            );
+
+        // ========================================
+        // CLIQUE NO MAPA
+        // ========================================
+
+        settingsMap.addListener(
+            "click",
+            (event) => {
+
+                if (!pickingLocation) {
+
+                    return;
+
+                }
+
+
+                if (!event.latLng) {
+
+                    return;
+
+                }
+
+
+                selecionarPontoNoMapa(
+                    event.latLng
+                );
+
+            }
+        );
+
+
+        console.log(
+            "Mapa do Settings pronto!"
+        );
+
+
+        // ========================================
+        // POSICIONAR LOCAL SELECIONADO
+        // ========================================
+
+        if (
+            localSelecionado !== null
+        ) {
+
+            atualizarMapaComLocalSelecionado();
+
+        }
+
+    } catch (erro) {
+
+        console.error(
+            "ERRO NO MAPA DO SETTINGS:",
+            erro
+        );
+
+
+        if (mapPickerMessage) {
+
+            mapPickerMessage.textContent =
+                "Erro ao carregar o mapa. Veja o console.";
+
+        }
+
+    }
+
+}
+
+// ============================================================
+// ATUALIZAR MAPA COM LOCAL SELECIONADO
+// ============================================================
+
+function atualizarMapaComLocalSelecionado() {
+
+    if (!settingsMap) {
+
+        return;
+
+    }
+
+
+    const local =
+        locais.find(
+            item =>
+                Number(item.id) ===
+                Number(localSelecionado)
+        );
+
+
+    if (!local) {
+
+        return;
+
+    }
+
+
+    const latitude =
+        Number(local.latitude);
+
+    const longitude =
+        Number(local.longitude);
+
+
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+    ) {
+
+        return;
+
+    }
+
+
+    const position = {
+
+        lat: latitude,
+
+        lng: longitude
+
+    };
+
+
+    settingsMap.panTo(position);
+
+
+    settingsMap.setZoom(
+        Number(local.zoom) || 18
+    );
+
+
+    criarOuMoverMarcadorSelecionado(
+        position
+    );
+
+}
+
+
+// ============================================================
+// CRIAR / MOVER MARCADOR
+// ============================================================
+
+function criarOuMoverMarcadorSelecionado(
+    position
+) {
+
+    if (!settingsMap) {
+
+        return;
+
+    }
+
+
+    if (selectedLocationMarker) {
+
+        selectedLocationMarker.setPosition(
+            position
+        );
+
+        selectedLocationMarker.setMap(
+            settingsMap
+        );
+
+        return;
+
+    }
+
+
+    selectedLocationMarker =
+        new google.maps.Marker({
+
+            position: position,
+
+            map: settingsMap,
+
+            title:
+                "Local selecionado"
+
+        });
+
+}
+
+
+// ============================================================
+// SELECIONAR PONTO NO MAPA
+// ============================================================
+
+function selecionarPontoNoMapa(
+    latLng
+) {
+
+    const latitude =
+        latLng.lat();
+
+    const longitude =
+        latLng.lng();
+
+
+    const position = {
+
+        lat: latitude,
+
+        lng: longitude
+
+    };
+
+
+    // Remove marcador anterior
+    if (selectedLocationMarker) {
+
+        selectedLocationMarker.setMap(
+            null
+        );
+
+    }
+
+
+    // Cria marcador clássico
+    selectedLocationMarker =
+        new google.maps.Marker({
+
+            position: position,
+
+            map: settingsMap,
+
+            title: "Local selecionado"
+
+        });
+
+
+    // Latitude
+    document.getElementById(
+        "locationLatitude"
+    ).value =
+        latitude.toFixed(6);
+
+
+    // Longitude
+    document.getElementById(
+        "locationLongitude"
+    ).value =
+        longitude.toFixed(6);
+
+
+    // Sai do modo seleção
+    pickingLocation =
+        false;
+
+
+    pickLocationButton.textContent =
+        "📍 ESCOLHER LOCAL";
+
+
+    pickLocationButton.classList.remove(
+        "selecting"
+    );
+
+
+    // Mensagem
+    mapPickerMessage.textContent =
+        `Local selecionado: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+
+
+    // Centraliza
+    settingsMap.panTo(
+        position
+    );
+
+
+    settingsMap.setZoom(
+        18
+    );
+
+}
+
+
+// ============================================================
+// BOTÃO ESCOLHER LOCAL
+// ============================================================
+
+pickLocationButton.addEventListener(
+    "click",
+    () => {
+
+        pickingLocation =
+            !pickingLocation;
+
+
+        if (pickingLocation) {
+
+            pickLocationButton.textContent =
+                "✓ CLIQUE NO MAPA";
+
+
+            pickLocationButton.classList.add(
+                "selecting"
+            );
+
+
+            mapPickerMessage.textContent =
+                "Agora clique no ponto exato que deseja marcar.";
+
+        } else {
+
+            pickLocationButton.textContent =
+                "📍 ESCOLHER LOCAL";
+
+
+            pickLocationButton.classList.remove(
+                "selecting"
+            );
+
+
+            mapPickerMessage.textContent =
+                "Seleção cancelada.";
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// CARREGAR LOCAIS DO SUPABASE
+// ============================================================
 
 async function carregarLocais() {
 
     locationsList.innerHTML = `
+
         <p class="loading">
             Carregando locais...
         </p>
+
     `;
 
 
@@ -63,9 +631,11 @@ async function carregarLocais() {
 
 
         locationsList.innerHTML = `
+
             <p class="empty">
                 Erro ao carregar os locais.
             </p>
+
         `;
 
         return;
@@ -80,14 +650,15 @@ async function carregarLocais() {
     renderizarLista();
 
 
-    /*
-     * Se existir pelo menos um local,
-     * selecionamos o primeiro.
-     */
+    // --------------------------------------------------------
+    // Seleciona primeiro local
+    // --------------------------------------------------------
 
     if (locais.length > 0) {
 
-        selecionarLocal(locais[0].id);
+        selecionarLocal(
+            locais[0].id
+        );
 
     } else {
 
@@ -98,21 +669,24 @@ async function carregarLocais() {
 }
 
 
-/* ========================================
-   RENDERIZAR LISTA
-======================================== */
+// ============================================================
+// RENDERIZAR LISTA
+// ============================================================
 
 function renderizarLista() {
 
-    locationsList.innerHTML = "";
+    locationsList.innerHTML =
+        "";
 
 
     if (locais.length === 0) {
 
         locationsList.innerHTML = `
+
             <p class="empty">
                 Nenhum local cadastrado.
             </p>
+
         `;
 
         return;
@@ -120,79 +694,95 @@ function renderizarLista() {
     }
 
 
-    locais.forEach((local) => {
+    locais.forEach(
+        (local) => {
 
-        const card =
-            document.createElement("article");
-
-
-        card.className =
-            "location-card";
-
-
-        if (
-            localSelecionado === local.id
-        ) {
-
-            card.classList.add("active");
-
-        }
+            const card =
+                document.createElement(
+                    "article"
+                );
 
 
-        card.innerHTML = `
-
-            <div class="location-order">
-
-                ${String(local.ordem).padStart(2, "0")}
-
-            </div>
+            card.className =
+                "location-card";
 
 
-            <div>
+            if (
+                Number(localSelecionado) ===
+                Number(local.id)
+            ) {
 
-                <h3>
-                    ${escaparHTML(local.nome)}
-                </h3>
-
-                <p>
-                    ${
-                        escaparHTML(
-                            local.subtitulo || ""
-                        )
-                    }
-                </p>
-
-            </div>
-
-        `;
-
-
-        card.addEventListener(
-            "click",
-            () => {
-
-                selecionarLocal(local.id);
+                card.classList.add(
+                    "active"
+                );
 
             }
-        );
 
 
-        locationsList.appendChild(card);
+            card.innerHTML = `
 
-    });
+                <div class="location-order">
+
+                    ${String(
+                        local.ordem
+                    ).padStart(2, "0")}
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        ${escaparHTML(
+                            local.nome
+                        )}
+                    </h3>
+
+
+                    <p>
+                        ${escaparHTML(
+                            local.subtitulo || ""
+                        )}
+                    </p>
+
+                </div>
+
+            `;
+
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    selecionarLocal(
+                        local.id
+                    );
+
+                }
+            );
+
+
+            locationsList.appendChild(
+                card
+            );
+
+        }
+    );
 
 }
 
 
-/* ========================================
-   SELECIONAR LOCAL
-======================================== */
+// ============================================================
+// SELECIONAR LOCAL
+// ============================================================
 
 function selecionarLocal(id) {
 
     const local =
         locais.find(
-            item => item.id === id
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
 
@@ -204,7 +794,7 @@ function selecionarLocal(id) {
 
 
     localSelecionado =
-        id;
+        local.id;
 
 
     editorLabel.textContent =
@@ -215,7 +805,9 @@ function selecionarLocal(id) {
         local.nome;
 
 
-    preencherFormulario(local);
+    preencherFormulario(
+        local
+    );
 
 
     deleteButton.style.display =
@@ -228,12 +820,23 @@ function selecionarLocal(id) {
 
     renderizarLista();
 
+
+    // --------------------------------------------------------
+    // Move o mapa para o local selecionado
+    // --------------------------------------------------------
+
+    if (settingsMap) {
+
+        atualizarMapaComLocalSelecionado();
+
+    }
+
 }
 
 
-/* ========================================
-   PREENCHER FORMULÁRIO
-======================================== */
+// ============================================================
+// PREENCHER FORMULÁRIO
+// ============================================================
 
 function preencherFormulario(local) {
 
@@ -282,13 +885,13 @@ function preencherFormulario(local) {
     document.getElementById(
         "locationHeading"
     ).value =
-        local.heading;
+        local.heading ?? 0;
 
 
     document.getElementById(
         "locationPitch"
     ).value =
-        local.pitch;
+        local.pitch ?? 0;
 
 
     document.getElementById(
@@ -299,9 +902,9 @@ function preencherFormulario(local) {
 }
 
 
-/* ========================================
-   NOVO LOCAL
-======================================== */
+// ============================================================
+// NOVO LOCAL
+// ============================================================
 
 function novoLocal() {
 
@@ -322,20 +925,20 @@ function novoLocal() {
 
     document.getElementById(
         "locationId"
-    ).value = "";
+    ).value =
+        "";
 
-
-    /*
-     * Sugere a próxima ordem.
-     */
 
     const proximaOrdem =
         locais.length > 0
+
             ? Math.max(
                 ...locais.map(
-                    local => Number(local.ordem)
+                    local =>
+                        Number(local.ordem)
                 )
             ) + 1
+
             : 1;
 
 
@@ -373,12 +976,49 @@ function novoLocal() {
 
     renderizarLista();
 
+
+    // --------------------------------------------------------
+    // Limpa marcador temporário
+    // --------------------------------------------------------
+
+    if (
+        selectedLocationMarker
+    ) {
+
+        selectedLocationMarker.map =
+            null;
+
+        selectedLocationMarker =
+            null;
+
+    }
+
+
+    if (settingsMap) {
+
+        settingsMap.panTo({
+
+            lat: -12.9714,
+
+            lng: -38.5014
+
+        });
+
+
+        settingsMap.setZoom(14);
+
+    }
+
+
+    mapPickerMessage.textContent =
+        'Clique em "Escolher local" e depois selecione um ponto no mapa.';
+
 }
 
 
-/* ========================================
-   SALVAR
-======================================== */
+// ============================================================
+// SALVAR
+// ============================================================
 
 locationForm.addEventListener(
     "submit",
@@ -399,11 +1039,12 @@ locationForm.addEventListener(
 
         const local = {
 
-            ordem: Number(
-                document.getElementById(
-                    "locationOrder"
-                ).value
-            ),
+            ordem:
+                Number(
+                    document.getElementById(
+                        "locationOrder"
+                    ).value
+                ),
 
             nome:
                 document.getElementById(
@@ -415,35 +1056,40 @@ locationForm.addEventListener(
                     "locationSubtitle"
                 ).value.trim(),
 
-            latitude: Number(
-                document.getElementById(
-                    "locationLatitude"
-                ).value
-            ),
+            latitude:
+                Number(
+                    document.getElementById(
+                        "locationLatitude"
+                    ).value
+                ),
 
-            longitude: Number(
-                document.getElementById(
-                    "locationLongitude"
-                ).value
-            ),
+            longitude:
+                Number(
+                    document.getElementById(
+                        "locationLongitude"
+                    ).value
+                ),
 
-            zoom: Number(
-                document.getElementById(
-                    "locationZoom"
-                ).value
-            ),
+            zoom:
+                Number(
+                    document.getElementById(
+                        "locationZoom"
+                    ).value
+                ),
 
-            heading: Number(
-                document.getElementById(
-                    "locationHeading"
-                ).value
-            ) || 0,
+            heading:
+                Number(
+                    document.getElementById(
+                        "locationHeading"
+                    ).value
+                ) || 0,
 
-            pitch: Number(
-                document.getElementById(
-                    "locationPitch"
-                ).value
-            ) || 0,
+            pitch:
+                Number(
+                    document.getElementById(
+                        "locationPitch"
+                    ).value
+                ) || 0,
 
             descricao:
                 document.getElementById(
@@ -453,9 +1099,40 @@ locationForm.addEventListener(
         };
 
 
-        /*
-         * NOVO LOCAL
-         */
+        // ----------------------------------------------------
+        // Validação
+        // ----------------------------------------------------
+
+        if (!local.nome) {
+
+            formMessage.textContent =
+                "Digite um nome para o local.";
+
+            return;
+
+        }
+
+
+        if (
+            !Number.isFinite(
+                local.latitude
+            ) ||
+            !Number.isFinite(
+                local.longitude
+            )
+        ) {
+
+            formMessage.textContent =
+                "Informe uma latitude e longitude válidas.";
+
+            return;
+
+        }
+
+
+        // ----------------------------------------------------
+        // NOVO LOCAL
+        // ----------------------------------------------------
 
         if (!id) {
 
@@ -481,7 +1158,6 @@ locationForm.addEventListener(
                 formMessage.textContent =
                     error.message;
 
-
                 return;
 
             }
@@ -494,7 +1170,9 @@ locationForm.addEventListener(
             await carregarLocais();
 
 
-            selecionarLocal(data.id);
+            selecionarLocal(
+                data.id
+            );
 
 
             return;
@@ -502,9 +1180,9 @@ locationForm.addEventListener(
         }
 
 
-        /*
-         * EDITAR LOCAL
-         */
+        // ----------------------------------------------------
+        // EDITAR LOCAL
+        // ----------------------------------------------------
 
         const {
             error
@@ -529,7 +1207,6 @@ locationForm.addEventListener(
             formMessage.textContent =
                 error.message;
 
-
             return;
 
         }
@@ -550,9 +1227,9 @@ locationForm.addEventListener(
 );
 
 
-/* ========================================
-   EXCLUIR
-======================================== */
+// ============================================================
+// EXCLUIR
+// ============================================================
 
 deleteButton.addEventListener(
     "click",
@@ -574,7 +1251,8 @@ deleteButton.addEventListener(
         const local =
             locais.find(
                 item =>
-                    item.id === Number(id)
+                    Number(item.id) ===
+                    Number(id)
             );
 
 
@@ -621,7 +1299,6 @@ deleteButton.addEventListener(
             formMessage.textContent =
                 error.message;
 
-
             return;
 
         }
@@ -631,15 +1308,32 @@ deleteButton.addEventListener(
             "Local excluído.";
 
 
+        localSelecionado =
+            null;
+
+
+        if (
+            selectedLocationMarker
+        ) {
+
+            selectedLocationMarker.map =
+                null;
+
+            selectedLocationMarker =
+                null;
+
+        }
+
+
         await carregarLocais();
 
     }
 );
 
 
-/* ========================================
-   NOVO LOCAL
-======================================== */
+// ============================================================
+// NOVO LOCAL
+// ============================================================
 
 addLocationButton.addEventListener(
     "click",
@@ -651,9 +1345,9 @@ addLocationButton.addEventListener(
 );
 
 
-/* ========================================
-   ESCAPAR HTML
-======================================== */
+// ============================================================
+// ESCAPAR HTML
+// ============================================================
 
 function escaparHTML(texto) {
 
@@ -687,253 +1381,272 @@ function escaparHTML(texto) {
 }
 
 
-async function inicializarMapaSettings() {
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
 
-    const { Map } =
-        await google.maps.importLibrary("maps");
+async function iniciarSettings() {
 
-    const { AdvancedMarkerElement } =
-        await google.maps.importLibrary("marker");
-
-
-    settingsMap =
-        new Map(
-            document.getElementById(
-                "settingsMap"
-            ),
-            {
-
-                center: {
-                    lat: -12.9714,
-                    lng: -38.5014
-                },
-
-                zoom: 14,
-
-                mapTypeId: "roadmap",
-
-                mapId: "DEMO_MAP_ID",
-
-                zoomControl: true,
-
-                streetViewControl: true,
-
-                mapTypeControl: false,
-
-                fullscreenControl: false
-
-            }
-        );
+    verificarElementos();
 
 
-    /*
-     * Clique no mapa
-     */
-
-    settingsMap.addListener(
-        "click",
-        (event) => {
-
-            if (!pickingLocation) {
-
-                return;
-
-            }
+    await carregarLocais();
 
 
-            if (!event.latLng) {
-
-                return;
-
-            }
-
-
-            selecionarLocalNoMapa(
-                event.latLng,
-                AdvancedMarkerElement
-            );
-
-        }
-    );
+    await inicializarMapaSettings();
 
 }
 
-function selecionarLocalNoMapa(
-    latLng,
-    AdvancedMarkerElement
-) {
 
-    const latitude =
-        latLng.lat();
+iniciarSettings();
 
-    const longitude =
-        latLng.lng();
+/* ========================================
+   TESTAR STREET VIEW
+======================================== */
 
+async function testarStreetView() {
 
-    /*
-     * Remove marcador anterior
-     */
+    if (!settingsStreetViewService) {
 
-    if (selectedMarker) {
+        streetViewMessage.textContent =
+            "O Street View ainda não foi inicializado.";
 
-        selectedMarker.map = null;
+        return;
 
     }
 
 
-    /*
-     * Cria marcador novo
-     */
-
-    const marcador =
-        document.createElement("div");
-
-
-    marcador.className =
-        "custom-marker active";
+    const latitude =
+        Number(
+            document.getElementById(
+                "locationLatitude"
+            ).value
+        );
 
 
-    marcador.innerHTML = `
-
-        <div class="marker-number">
-            NOVO
-        </div>
-
-        <div class="marker-dot"></div>
-
-    `;
+    const longitude =
+        Number(
+            document.getElementById(
+                "locationLongitude"
+            ).value
+        );
 
 
-    selectedMarker =
-        new AdvancedMarkerElement({
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+    ) {
 
-            map: settingsMap,
+        streetViewMessage.textContent =
+            "Escolha primeiro um local válido.";
 
-            position: {
-                lat: latitude,
-                lng: longitude
-            },
+        return;
 
-            title: "Local selecionado",
+    }
 
-            content: marcador
+
+    streetViewMessage.textContent =
+        "Procurando Street View...";
+
+
+    try {
+
+        const resultado =
+            await new Promise(
+                (resolve, reject) => {
+
+                    settingsStreetViewService.getPanorama(
+                        {
+                            location: {
+                                lat: latitude,
+                                lng: longitude
+                            },
+
+                            radius: 80
+                        },
+
+                        (
+                            data,
+                            status
+                        ) => {
+
+                            if (
+                                status ===
+                                google.maps.StreetViewStatus.OK
+                            ) {
+
+                                resolve(data);
+
+                            } else {
+
+                                reject(
+                                    new Error(
+                                        "Nenhum Street View encontrado."
+                                    )
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+
+        if (
+            !resultado ||
+            !resultado.location ||
+            !resultado.location.pano
+        ) {
+
+            throw new Error(
+                "Panorama inválido."
+            );
+
+        }
+
+
+        const heading =
+            Number(
+                document.getElementById(
+                    "locationHeading"
+                ).value
+            ) || 0;
+
+
+        const pitch =
+            Number(
+                document.getElementById(
+                    "locationPitch"
+                ).value
+            ) || 0;
+
+
+        const zoom =
+            Number(
+                document.getElementById(
+                    "locationZoom"
+                ).value
+            ) || 18;
+
+
+        settingsPanorama.setPano(
+            resultado.location.pano
+        );
+
+
+        settingsPanorama.setPov({
+
+            heading: heading,
+
+            pitch: pitch
 
         });
 
 
-    /*
-     * Preenche formulário
-     */
-
-    document.getElementById(
-        "locationLatitude"
-    ).value =
-        latitude.toFixed(6);
-
-
-    document.getElementById(
-        "locationLongitude"
-    ).value =
-        longitude.toFixed(6);
-
-
-    /*
-     * Sai do modo de seleção
-     */
-
-    pickingLocation = false;
-
-
-    const button =
-        document.getElementById(
-            "pickLocationButton"
+        settingsPanorama.setZoom(
+            zoom
         );
 
 
-    button.textContent =
-        "📍 ESCOLHER LOCAL";
+        settingsPanorama.setVisible(
+            true
+        );
 
 
-    /*
-     * Mensagem
-     */
-
-    document.getElementById(
-        "mapPickerMessage"
-    ).textContent =
-        `Local selecionado: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+        streetViewMessage.textContent =
+            `Street View encontrado para: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
 
-    /*
-     * Centraliza no ponto
-     */
+    } catch (erro) {
 
-    settingsMap.panTo({
+        console.error(
+            "Erro no Street View:",
+            erro
+        );
 
-        lat: latitude,
 
-        lng: longitude
+        streetViewMessage.textContent =
+            "Não existe Street View disponível próximo desse ponto.";
+
+    }
+
+}
+
+testStreetViewButton.addEventListener(
+    "click",
+    testarStreetView
+);
+
+[
+    "locationHeading",
+    "locationPitch",
+    "locationZoom"
+].forEach((id) => {
+
+    document
+        .getElementById(id)
+        .addEventListener(
+            "input",
+            atualizarStreetView
+        );
+
+});
+
+function atualizarStreetView() {
+
+    if (!settingsPanorama) {
+
+        return;
+
+    }
+
+
+    if (
+        !settingsPanorama.getVisible()
+    ) {
+
+        return;
+
+    }
+
+
+    const heading =
+        Number(
+            document.getElementById(
+                "locationHeading"
+            ).value
+        ) || 0;
+
+
+    const pitch =
+        Number(
+            document.getElementById(
+                "locationPitch"
+            ).value
+        ) || 0;
+
+
+    const zoom =
+        Number(
+            document.getElementById(
+                "locationZoom"
+            ).value
+        ) || 18;
+
+
+    settingsPanorama.setPov({
+
+        heading: heading,
+
+        pitch: pitch
 
     });
 
 
-    settingsMap.setZoom(18);
-
-}
-
-document
-    .getElementById("pickLocationButton")
-    .addEventListener(
-        "click",
-        () => {
-
-            pickingLocation =
-                !pickingLocation;
-
-
-            const button =
-                document.getElementById(
-                    "pickLocationButton"
-                );
-
-
-            const message =
-                document.getElementById(
-                    "mapPickerMessage"
-                );
-
-
-            if (pickingLocation) {
-
-                button.textContent =
-                    "✓ CLIQUE NO MAPA";
-
-                message.textContent =
-                    "Agora clique no ponto exato que deseja marcar.";
-
-            } else {
-
-                button.textContent =
-                    "📍 ESCOLHER LOCAL";
-
-                message.textContent =
-                    "Modo de seleção cancelado.";
-
-            }
-
-        }
+    settingsPanorama.setZoom(
+        zoom
     );
 
-/* ========================================
-   INICIAR
-======================================== */
-
-carregarLocais();
-
-/*
- * Inicializa o mapa do Settings
- * quando a API do Google estiver disponível.
- */
-
-window.initSettingsMap =
-    inicializarMapaSettings;
+}

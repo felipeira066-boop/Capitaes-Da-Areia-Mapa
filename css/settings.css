@@ -915,3 +915,151 @@ body {
             0.55
         );
 }
+
+/* ========================================
+   MARCADOR DO SELETOR
+======================================== */
+
+.picker-marker {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    pointer-events: none;
+}
+
+.picker-marker-pulse {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    width: 26px;
+    height: 26px;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(111, 167, 184, 0.6);
+
+    animation:
+        pickerPulse 1.8s ease-out infinite;
+}
+
+.picker-marker-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    width: 10px;
+    height: 10px;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: #6FA7B8;
+
+    border: 2px solid #E6D2A3;
+
+    box-shadow:
+        0 0 10px rgba(111, 167, 184, 0.6);
+}
+
+@keyframes pickerPulse {
+
+    0% {
+        transform:
+            translate(-50%, -50%)
+            scale(0.4);
+
+        opacity: 0.8;
+    }
+
+    70% {
+        transform:
+            translate(-50%, -50%)
+            scale(1.2);
+
+        opacity: 0;
+    }
+
+    100% {
+        transform:
+            translate(-50%, -50%)
+            scale(1.2);
+
+        opacity: 0;
+    }
+
+}
+
+#pickLocationButton.selecting {
+
+    background:
+        rgba(
+            111,
+            167,
+            184,
+            0.15
+        );
+
+    border-color:
+        rgba(
+            111,
+            167,
+            184,
+            0.8
+        );
+
+    color: #E6D2A3;
+
+}
+
+/* ========================================
+   STREET VIEW DO SETTINGS
+======================================== */
+
+.street-view-editor {
+
+    margin-top: 25px;
+
+    padding-top: 20px;
+
+    border-top:
+        1px solid
+        rgba(
+            216,
+            184,
+            120,
+            0.12
+        );
+}
+
+
+.settings-street-view {
+
+    width: 100%;
+
+    height: 320px;
+
+    margin-top: 15px;
+
+    border:
+        1px solid
+        rgba(
+            216,
+            184,
+            120,
+            0.18
+        );
+
+    background: #101617;
+
+}
+
+
+#testStreetViewButton {
+
+    white-space: nowrap;
+
+}

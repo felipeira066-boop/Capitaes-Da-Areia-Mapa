@@ -22,6 +22,8 @@
 
     <main class="settings-page">
 
+
+
         <!-- ======================================
              CABEÇALHO
         ======================================= -->
@@ -251,6 +253,7 @@
                         <div class="picker-header">
 
                             <div>
+
                                 <p class="section-label">
                                     LOCALIZAÇÃO
                                 </p>
@@ -258,6 +261,7 @@
                                 <h3>
                                     Escolher no mapa
                                 </h3>
+
                             </div>
 
                             <button
@@ -270,10 +274,54 @@
 
                         </div>
 
+
                         <div
                             id="settingsMap"
                             class="settings-map"
                         ></div>
+
+                        <div class="street-view-editor">
+
+                            <div class="picker-header">
+
+                                <div>
+
+                                    <p class="section-label">
+                                        STREET VIEW
+                                    </p>
+
+                                    <h3>
+                                        Visualização
+                                    </h3>
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    id="testStreetViewButton"
+                                    class="primary-button"
+                                >
+                                    ▶ TESTAR STREET VIEW
+                                </button>
+
+                            </div>
+
+
+                            <div
+                                id="settingsStreetView"
+                                class="settings-street-view"
+                            ></div>
+
+
+                            <p
+                                id="streetViewMessage"
+                                class="picker-message"
+                            >
+                                Selecione um local e teste a visão do Street View.
+                            </p>
+
+                        </div>
+
 
                         <p
                             id="mapPickerMessage"
@@ -284,7 +332,6 @@
                         </p>
 
                     </div>
-
 
                     <!-- ZOOM -->
 
@@ -395,6 +442,8 @@
             </section>
 
         </div>
+
+        
 
 
         <!-- ======================================
