@@ -5,11 +5,9 @@ config/config.js
 .env
 .env.*
 !.env.example
-node_modules/
 
-# Sistema operacional
-.DS_Store
-Thumbs.db
+node_modules/
 
 # VS Code
 .vscode/
+

@@ -114,6 +114,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+    initMap().catch((erro) => {
+
+        console.error(
+            "Erro ao inicializar o mapa:",
+            erro
+        );
+
+    });
+
 });
 
 
@@ -168,6 +177,63 @@ async function carregarLocais() {
 
 }
 
+let googleMapsCarregado = false;
+
+
+function carregarGoogleMaps() {
+
+    return new Promise((resolve, reject) => {
+
+        if (window.google?.maps) {
+
+            googleMapsCarregado = true;
+
+            resolve();
+
+            return;
+        }
+
+
+        const script =
+            document.createElement("script");
+
+
+        script.src =
+            `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+                CONFIG.googleMapsApiKey
+            )}&loading=async&libraries=marker`;
+
+
+        script.async = true;
+
+        script.defer = true;
+
+
+        script.onload = () => {
+
+            googleMapsCarregado = true;
+
+            resolve();
+
+        };
+
+
+        script.onerror = () => {
+
+            reject(
+                new Error(
+                    "Não foi possível carregar o Google Maps."
+                )
+            );
+
+        };
+
+
+        document.head.appendChild(script);
+
+    });
+
+}
 
 // ========================================
 // GOOGLE MAPS
@@ -177,195 +243,211 @@ async function initMap() {
 
     console.log("Inicializando mapa...");
 
+    try {
 
-    // ========================================
-    // CARREGA LOCAIS
-    // ========================================
+        // ========================================
+        // GOOGLE MAPS
+        // ========================================
 
-    locais =
-        await carregarLocais();
+        await carregarGoogleMaps();
 
-
-    if (locais.length === 0) {
-
-        console.error(
-            "Nenhum local foi encontrado no Supabase."
-        );
-
-        return;
-
-    }
+        console.log("Google Maps carregado!");
 
 
-    // ========================================
-    // BIBLIOTECAS DO GOOGLE
-    // ========================================
+        // ========================================
+        // LOCAIS
+        // ========================================
 
-    const { Map } =
-        await google.maps.importLibrary("maps");
-
-
-    const { AdvancedMarkerElement } =
-        await google.maps.importLibrary("marker");
+        locais = await carregarLocais();
 
 
-    const { StreetViewService } =
-        await google.maps.importLibrary("streetView");
+        if (locais.length === 0) {
 
+            console.error(
+                "Nenhum local foi encontrado no Supabase."
+            );
 
-    // ========================================
-    // STREET VIEW SERVICE
-    // ========================================
-
-    streetViewService =
-        new StreetViewService();
-
-
-    // ========================================
-    // PRIMEIRO LOCAL
-    // ========================================
-
-    const primeiroLocal =
-        locais[0];
-
-
-    // ========================================
-    // CRIA MAPA
-    // ========================================
-
-    map = new Map(
-        document.getElementById("map"),
-        {
-
-            center: {
-                lat: Number(primeiroLocal.latitude),
-                lng: Number(primeiroLocal.longitude)
-            },
-
-            zoom: Number(primeiroLocal.zoom),
-
-            mapTypeId: "roadmap",
-
-            mapId: "DEMO_MAP_ID",
-
-            zoomControl: true,
-
-            streetViewControl: true,
-
-            mapTypeControl: false,
-
-            fullscreenControl: false
+            return;
 
         }
-    );
 
 
-    // ========================================
-    // STREET VIEW
-    // ========================================
+        // ========================================
+        // BIBLIOTECAS GOOGLE
+        // ========================================
 
-    panorama =
-        map.getStreetView();
-
-
-    panorama.setOptions({
-
-        visible: false,
-
-        enableCloseButton: true,
-
-        addressControl: false,
-
-        fullscreenControl: true,
-
-        linksControl: true,
-
-        panControl: true,
-
-        zoomControl: true
-
-    });
+        const { Map } =
+            await google.maps.importLibrary("maps");
 
 
-    // ========================================
-    // MARCADORES
-    // ========================================
-
-    locais.forEach((local, index) => {
-
-        const elemento =
-            criarMarcador(local, index);
+        const { AdvancedMarkerElement } =
+            await google.maps.importLibrary("marker");
 
 
-        const marker =
-            new AdvancedMarkerElement({
+        const { StreetViewService } =
+            await google.maps.importLibrary("streetView");
 
-                map: map,
 
-                position: {
-                    lat: Number(local.latitude),
-                    lng: Number(local.longitude)
+        // ========================================
+        // STREET VIEW
+        // ========================================
+
+        streetViewService =
+            new StreetViewService();
+
+
+        // ========================================
+        // PRIMEIRO LOCAL
+        // ========================================
+
+        const primeiroLocal =
+            locais[0];
+
+
+        // ========================================
+        // MAPA
+        // ========================================
+
+        map = new Map(
+            document.getElementById("map"),
+            {
+
+                center: {
+                    lat: Number(
+                        primeiroLocal.latitude
+                    ),
+
+                    lng: Number(
+                        primeiroLocal.longitude
+                    )
                 },
 
-                title: local.nome,
+                zoom: Number(
+                    primeiroLocal.zoom
+                ),
 
-                content: elemento,
+                mapTypeId: "roadmap",
 
-                gmpClickable: true
+                mapId: "DEMO_MAP_ID",
 
-            });
+                zoomControl: true,
 
+                streetViewControl: true,
 
-        marker.addEventListener(
-            "gmp-click",
-            () => {
+                mapTypeControl: false,
 
-                console.log(
-                    "Marcador clicado:",
-                    index + 1
-                );
-
-
-                /*
-                 * false = clique direto,
-                 * portanto entra diretamente
-                 * no Street View.
-                 */
-
-                irParaLocal(
-                    index,
-                    false
-                );
+                fullscreenControl: false
 
             }
         );
 
 
-        markers.push(marker);
+        // ========================================
+        // STREET VIEW
+        // ========================================
 
-    });
-
-
-    // ========================================
-    // INTERFACE INICIAL
-    // ========================================
-
-    atualizarInterface();
-
-    destacarMarcador(0);
+        panorama =
+            map.getStreetView();
 
 
-    console.log("Mapa pronto!");
+        panorama.setOptions({
+
+            visible: false,
+
+            enableCloseButton: true,
+
+            addressControl: false,
+
+            fullscreenControl: true,
+
+            linksControl: true,
+
+            panControl: true,
+
+            zoomControl: true
+
+        });
+
+
+        // ========================================
+        // MARCADORES
+        // ========================================
+
+        locais.forEach((local, index) => {
+
+            const elemento =
+                criarMarcador(local, index);
+
+
+            const marker =
+                new AdvancedMarkerElement({
+
+                    map: map,
+
+                    position: {
+                        lat: Number(local.latitude),
+                        lng: Number(local.longitude)
+                    },
+
+                    title: local.nome,
+
+                    content: elemento,
+
+                    gmpClickable: true
+
+                });
+
+
+            marker.addEventListener(
+                "gmp-click",
+                () => {
+
+                    console.log(
+                        "Marcador clicado:",
+                        index + 1
+                    );
+
+                    irParaLocal(
+                        index,
+                        false
+                    );
+
+                }
+            );
+
+
+            markers.push(marker);
+
+        });
+
+
+        // ========================================
+        // INTERFACE
+        // ========================================
+
+        atualizarInterface();
+
+        destacarMarcador(0);
+
+
+        console.log("Mapa pronto!");
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao inicializar o mapa:",
+            erro
+        );
+
+    }
 
 }
-
 
 // ========================================
 // GOOGLE CALLBACK
 // ========================================
 
 window.initMap = initMap;
-
 
 // ========================================
 // CRIAR MARCADOR
