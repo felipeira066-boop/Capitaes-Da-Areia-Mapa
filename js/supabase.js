@@ -3,10 +3,6 @@ const supabaseClient =
         CONFIG.supabaseUrl,
         CONFIG.supabasePublishableKey
     );
-
-const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_bdMT0e6zAXcI1Yq327o-Bw_B4epCcDZ";
-
 /*
 const supabaseClient =
     window.supabase.createClient(
