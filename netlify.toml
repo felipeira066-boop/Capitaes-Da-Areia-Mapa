@@ -1,0 +1,3 @@
+[build]
+  command = "node scripts/gerar-config.js"
+  publish = "."
