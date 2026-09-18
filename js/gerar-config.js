@@ -4,7 +4,7 @@ const path = require("path");
 const config = `const CONFIG = {
     googleMapsApiKey: ${JSON.stringify(process.env.googleMapsApiKey || "")},
     supabaseUrl: ${JSON.stringify(process.env.supabaseUrl || "")},
-    supabaseKey: ${JSON.stringify(process.env.supabasePublishableKey || "")}
+    supabasePublishableKey: ${JSON.stringify(process.env.supabasePublishableKey || "")}
 };
 `;
 
