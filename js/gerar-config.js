@@ -2,9 +2,9 @@ const fs = require("fs");
 const path = require("path");
 
 const config = `const CONFIG = {
-    googleMapsApiKey: ${JSON.stringify(process.env.GOOGLE_MAPS_API_KEY || "")},
-    supabaseUrl: ${JSON.stringify(process.env.SUPABASE_URL || "")},
-    supabaseKey: ${JSON.stringify(process.env.SUPABASE_PUBLISHABLE_KEY || "")}
+    googleMapsApiKey: ${JSON.stringify(process.env.googleMapsApiKey || "")},
+    supabaseUrl: ${JSON.stringify(process.env.supabasePublishableKey || "")},
+    supabaseKey: ${JSON.stringify(process.env.supabaseUrl || "")}
 };
 `;
 
