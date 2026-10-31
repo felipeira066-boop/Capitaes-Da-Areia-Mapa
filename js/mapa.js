@@ -8,6 +8,12 @@ let localAtual = 0;
 
 let animando = false;
 
+let navegacaoAutomatica = false;
+
+let temporizadorNavegacao = null;
+
+const ATRASO_NAVEGACAO_AUTOMATICA = 5000;
+
 let streetViewService = null;
 
 let panorama = null;
@@ -26,6 +32,7 @@ let locationDescription;
 
 let prevButton;
 let nextButton;
+let autoNavigationButton;
 
 let progress;
 
@@ -59,6 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     nextButton =
         document.getElementById("nextButton");
+
+    autoNavigationButton =
+        document.getElementById("autoNavigationButton");
 
     progress =
         document.querySelector(".progress");
@@ -109,6 +119,24 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("VOLTAR clicado");
 
             irParaLocal(localAtual - 1, true);
+
+        });
+
+    }
+
+    if (autoNavigationButton) {
+
+        autoNavigationButton.addEventListener("click", () => {
+
+            if (navegacaoAutomatica) {
+
+                pararNavegacaoAutomatica();
+
+                return;
+
+            }
+
+            iniciarNavegacaoAutomatica();
 
         });
 
@@ -485,8 +513,16 @@ function criarMarcador(local, index) {
 
 async function irParaLocal(
     index,
-    fazerAnimacao = true
+    fazerAnimacao = true,
+    navegacaoAutomaticaAtiva = false
 ) {
+
+    if (!navegacaoAutomaticaAtiva) {
+
+        pararNavegacaoAutomatica();
+
+    }
+
 
     if (!map) {
 
@@ -1105,33 +1141,132 @@ function abrirPainel() {
 
 function atualizarBotoesAnimacao(valor) {
 
+    if (prevButton) {
+
+        prevButton.disabled =
+            valor || localAtual === 0;
+
+    }
+
+    if (nextButton) {
+
+        nextButton.disabled =
+            valor || localAtual === locais.length - 1;
+
+    }
+
+    if (autoNavigationButton) {
+
+        autoNavigationButton.disabled =
+            !navegacaoAutomatica &&
+            (valor || localAtual === locais.length - 1);
+
+    }
+
+}
+
+
+function iniciarNavegacaoAutomatica() {
+
     if (
-        !prevButton ||
-        !nextButton
+        animando ||
+        localAtual >= locais.length - 1
     ) {
 
         return;
 
     }
 
+    navegacaoAutomatica = true;
 
-    if (valor) {
+    autoNavigationButton.textContent =
+        "■ PARAR NAVEGAÇÃO";
 
-        prevButton.disabled = true;
+    autoNavigationButton.setAttribute(
+        "aria-pressed",
+        "true"
+    );
 
-        nextButton.disabled = true;
+    atualizarBotoesAnimacao(false);
 
-        return;
+    agendarProximoLocal();
+
+}
+
+
+function pararNavegacaoAutomatica() {
+
+    navegacaoAutomatica = false;
+
+    if (temporizadorNavegacao !== null) {
+
+        clearTimeout(temporizadorNavegacao);
+
+        temporizadorNavegacao = null;
 
     }
 
+    if (autoNavigationButton) {
 
-    prevButton.disabled =
-        localAtual === 0;
+        autoNavigationButton.textContent =
+            "▶ NAVEGAÇÃO AUTOMÁTICA";
+
+        autoNavigationButton.setAttribute(
+            "aria-pressed",
+            "false"
+        );
+
+    }
+
+    atualizarBotoesAnimacao(animando);
+
+}
 
 
-    nextButton.disabled =
-        localAtual === locais.length - 1;
+function agendarProximoLocal() {
+
+    temporizadorNavegacao =
+        setTimeout(async () => {
+
+            temporizadorNavegacao = null;
+
+            if (!navegacaoAutomatica) {
+
+                return;
+
+            }
+
+            if (localAtual >= locais.length - 1) {
+
+                pararNavegacaoAutomatica();
+
+                return;
+
+            }
+
+            await irParaLocal(
+                localAtual + 1,
+                true,
+                true
+            );
+
+            if (!navegacaoAutomatica) {
+
+                return;
+
+            }
+
+            if (localAtual >= locais.length - 1) {
+
+                pararNavegacaoAutomatica();
+
+                return;
+
+            }
+
+            agendarProximoLocal();
+
+        }, ATRASO_NAVEGACAO_AUTOMATICA);
 
 }
 

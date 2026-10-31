@@ -522,14 +522,12 @@ function selecionarPontoNoMapa(
         });
 
 
-    // Latitude
     document.getElementById(
         "locationLatitude"
     ).value =
         latitude.toFixed(6);
 
 
-    // Longitude
     document.getElementById(
         "locationLongitude"
     ).value =
@@ -552,7 +550,7 @@ function selecionarPontoNoMapa(
 
     // Mensagem
     mapPickerMessage.textContent =
-        `Local selecionado: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+        "Local selecionado no mapa.";
 
 
     // Centraliza
@@ -1058,6 +1056,16 @@ locationForm.addEventListener(
                 "locationId"
             ).value;
 
+        const latitudeInput =
+            document.getElementById(
+                "locationLatitude"
+            ).value.trim();
+
+        const longitudeInput =
+            document.getElementById(
+                "locationLongitude"
+            ).value.trim();
+
 
         const local = {
 
@@ -1079,18 +1087,10 @@ locationForm.addEventListener(
                 ).value.trim(),
 
             latitude:
-                Number(
-                    document.getElementById(
-                        "locationLatitude"
-                    ).value
-                ),
+                Number(latitudeInput),
 
             longitude:
-                Number(
-                    document.getElementById(
-                        "locationLongitude"
-                    ).value
-                ),
+                Number(longitudeInput),
 
             zoom:
                 Number(
@@ -1136,6 +1136,8 @@ locationForm.addEventListener(
 
 
         if (
+            !latitudeInput ||
+            !longitudeInput ||
             !Number.isFinite(
                 local.latitude
             ) ||
@@ -1145,7 +1147,7 @@ locationForm.addEventListener(
         ) {
 
             formMessage.textContent =
-                "Informe uma latitude e longitude válidas.";
+                "Escolha um local no mapa antes de salvar.";
 
             return;
 
@@ -1438,23 +1440,27 @@ async function testarStreetView() {
     }
 
 
-    const latitude =
-        Number(
-            document.getElementById(
-                "locationLatitude"
-            ).value
-        );
+    const latitudeInput =
+        document.getElementById(
+            "locationLatitude"
+        ).value.trim();
 
+
+    const longitudeInput =
+        document.getElementById(
+            "locationLongitude"
+        ).value.trim();
+
+    const latitude =
+        Number(latitudeInput);
 
     const longitude =
-        Number(
-            document.getElementById(
-                "locationLongitude"
-            ).value
-        );
+        Number(longitudeInput);
 
 
     if (
+        !latitudeInput ||
+        !longitudeInput ||
         !Number.isFinite(latitude) ||
         !Number.isFinite(longitude)
     ) {
@@ -1578,7 +1584,7 @@ async function testarStreetView() {
 
 
         streetViewMessage.textContent =
-            `Street View encontrado para: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            "Street View encontrado para o local selecionado.";
 
 
     } catch (erro) {
